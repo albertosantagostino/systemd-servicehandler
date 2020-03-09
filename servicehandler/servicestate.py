@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Enum class to represent service status
+Enum classes to represent service status
 Alberto Santagostino, 2020
 """
 
 from enum import Enum, auto
+from operator import itemgetter
 
 
 class ServiceState(Enum):
@@ -19,25 +20,51 @@ class ServiceState(Enum):
     # yapf: enable
 
 
+class ServiceEnablementState(Enum):
+    """Enum holding the current enablement state of the service"""
+    # yapf: disable
+    ENABLED  = auto()
+    DISABLED = auto()
+    UNSET    = auto()
+    # yapf: enable
+
+
 def compute_state(properties):
     """Return the current ServiceState depending on the service properties"""
-
     #    +-------------+--------------------------------+
     #    | PROPERTY    | STOPPED  | RUNNING | ERROR     |
     #    +-------------+----------+---------+-----------+
-    #    | MainPID     | 0        | PID     | 0         |
     #    | ActiveState | inactive | active  | failed    |
     #    | SubState    | dead     | running | failed    |
     #    | Result      | success  | success | exit-code |
+    #    | (MainPID)   | 0        | (PID)   | 0         |
     #    +-------------+----------+---------+-----------+
 
-    ActiveState, SubState, Result = properties['ActiveState'], properties['SubState'], properties['Result']
+    ActiveState, SubState, Result = itemgetter('ActiveState', 'SubState', 'Result')(properties)
 
-    if (ActiveState == 'active') and (SubState == 'running'):
+    if ActiveState == 'active' and SubState == 'running':
         return ServiceState.RUNNING
-    elif (ActiveState == 'inactive') and (SubState == 'dead'):
+    elif ActiveState == 'inactive' and SubState == 'dead':
         return ServiceState.STOPPED
-    elif (Result == 'exit-code'):
+    elif Result == 'exit-code':
         return ServiceState.ERROR
     else:
         raise RuntimeError("Service in unknown state")
+
+
+def compute_enablement_state(properties):
+    """Return the current ServiceState depending on the service properties"""
+    #    +---------------+----------+----------+
+    #    | PROPERTY      | ENABLED  | DISABLED |
+    #    +---------------+----------+--------- +
+    #    | UnitFileState | enabled  | disabled |
+    #    +---------------+----------+----------+
+
+    UnitFileState = itemgetter('UnitFileState')(properties)
+
+    if UnitFileState == 'enabled':
+        return ServiceEnablementState.ENABLED
+    elif UnitFileState == 'disabled':
+        return ServiceEnablementState.DISABLED
+    else:
+        raise RuntimeError("Service in unknown enablement state")

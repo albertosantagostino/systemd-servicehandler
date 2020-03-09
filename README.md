@@ -23,7 +23,7 @@ WantedBy=multi-user.target
 
 Depending on how you created the service file you may need to provide access to the user through `sudo chmod 644 my-service.service` 
 
-**Access easily the service through <u>servicehandler</u>**
+**Access and control easily the service through servicehandler**
 
 ```python
 import servicehandler as sh
@@ -58,9 +58,9 @@ services = [ServiceA, ServiceB, ServiceC]
 
 # Iterate over the services easily
 for sr in services:
-    if sr.status == sh.ServiceStatus.STOPPED:
+    if sr.state == sh.ServiceStatus.STOPPED:
         sr.restart()
-    print(f"{sr.name} status is {sr.status}")
+    print(sr)
 ```
 
 ## Installation

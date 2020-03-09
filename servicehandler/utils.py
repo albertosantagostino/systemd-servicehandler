@@ -5,9 +5,21 @@ Utils class for ServiceHandler
 Alberto Santagostino, 2020
 """
 
-import subprocess
+from enum import Enum, auto
 
 
-def systemctl_command(command, unit_file):
-    """Run: systemctl --user {command} {unit_file}"""
-    subprocess.call(['systemctl', '--user', command, unit_file])
+class Response(Enum):
+    """Enum holding the response of a call"""
+    # yapf: disable
+    OK      = auto()
+    ALREADY = auto()
+    FAILED  = auto()
+    # yapf: enable
+
+
+def compute_response(condition):
+    """Return OK if the condition is satisfied, otherwise FAILED"""
+    if (condition):
+        return Response.OK
+    else:
+        return Response.FAILED
