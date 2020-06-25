@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Installer of systemd-servicehandler
+# Run 'python3 setup.py install' to install locally the current version
+
 try:
     from setuptools import setup, find_packages
 except ImportError:

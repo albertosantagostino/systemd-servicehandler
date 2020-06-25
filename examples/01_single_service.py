@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Example 01: Single service handler
-Alberto Santagostino, 2020
 """
 
 import servicehandler as sh

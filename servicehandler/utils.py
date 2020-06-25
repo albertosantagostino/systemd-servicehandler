@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Utils class for ServiceHandler
-Alberto Santagostino, 2020
 """
 
 from enum import Enum, auto

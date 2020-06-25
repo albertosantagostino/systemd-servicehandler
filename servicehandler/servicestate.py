@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Enum classes to represent service status
-Alberto Santagostino, 2020
 """
 
 from enum import Enum, auto
@@ -46,6 +45,8 @@ def compute_state(properties):
         return ServiceState.RUNNING
     elif ActiveState == 'inactive' and SubState == 'dead':
         return ServiceState.STOPPED
+    elif ActiveState == 'activating' and SubState == 'auto-restart':
+        return ServiceState.RELOADING
     elif Result == 'exit-code':
         return ServiceState.ERROR
     else:
