@@ -34,7 +34,7 @@ import servicehandler as sh
 my_service = sh.ServiceHandler('MyService','my-service.service')
 
 # Check current state
-my_service.state
+my_service.state()
 <ServiceState.STOPPED: 2>
 
 # Start the service
@@ -60,20 +60,20 @@ MyService changed state to ServiceState.STOPPED
 
 ```python
 # Check current enablement_state
-> my_service.enablement_state
+> my_service.enablement_state()
 <ServiceEnablementState.DISABLED: 2>
 
 # Enable the service
 > my_service.enable()
 Created symlink /home/user/.config/systemd/user/multi-user.target.wants/my_service.service → /usr/lib/systemd/user/my_service.service.
-<Response.OK: 1>
 MyService changed enablement state to ServiceEnablementState.ENABLED
+<Response.OK: 1>
 
 # Disable the service
 > my_service.disable()
 Removed /home/user/.config/systemd/user/multi-user.target.wants/my_service.service.
-<Response.OK: 1>
 MyService changed enablement state to ServiceEnablementState.DISABLED
+<Response.OK: 1>
 ```
 
 **Iterate over different services and perform batch operations**
