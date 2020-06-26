@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Helper class to ease access to systemd services (daemon)
+Helper class to ease access to systemd services (daemons)
 """
 
 import logging
@@ -102,6 +102,7 @@ class ServiceHandler():
         """Start the service"""
         self._systemctl_command('start')
 
+    # target_state check, we want Response.OK, not Response.ALREADY (FIXME)
     @expectation(target_state=ServiceState.RUNNING)
     def restart(self):
         """Restart the service"""
@@ -112,6 +113,7 @@ class ServiceHandler():
         """Stop the service"""
         self._systemctl_command('stop')
 
+    # target_state for kill() depends on the parameter restart in the unit file (FIXME)
     @expectation(target_state=ServiceState.RUNNING)
     def kill(self):
         """
@@ -127,13 +129,16 @@ class ServiceHandler():
         # TODO: Change time.sleep to wait until process of same service but different PID is up and running
         time.sleep(0.5)
 
+    # TODO: Decorator also for enable/disable
     def enable(self):
         """Enable the service"""
         if self.enablement_state is ServiceEnablementState.ENABLED:
             return Response.ALREADY
+        import ipdb
+        ipdb.set_trace()
         self._systemctl_command('enable')
         self.update_state()
-        return compute_response(self.state is ServiceEnablementState.ENABLED)
+        return compute_response(self.enablement_state is ServiceEnablementState.ENABLED)
 
     def disable(self):
         """Disable the service"""
@@ -141,7 +146,7 @@ class ServiceHandler():
             return Response.ALREADY
         self._systemctl_command('disable')
         self.update_state()
-        return compute_response(self.state is ServiceEnablementState.DISABLED)
+        return compute_response(self.enablement_state is ServiceEnablementState.DISABLED)
 
     def update_state(self):
         """Update service properties and states"""
@@ -151,9 +156,13 @@ class ServiceHandler():
                                        f'{self.unit_file}']).decode('ascii').strip().split('\n')
         result = {prop.split('=')[0]: prop.split('=')[1] for prop in res}
         old_state = self.state
+        old_enablement_state = self.enablement_state
         self.properties = {k: result[k] for k in properties if k in result}
         self.state = compute_state(self.properties)
         self.enablement_state = compute_enablement_state(self.properties)
 
+        # TODO: Create function to avoid duplication
         if (old_state is not ServiceState.UNSET) and (old_state is not self.state):
-            logging.info(f"{self.service_name} changed state to {self.state}")
+            logging.info(f"{self.service_name} changed enablement state to {self.state}")
+        if (old_enablement_state is not ServiceState.UNSET) and (old_enablement_state is not self.enablement_state):
+            logging.info(f"{self.service_name} changed enablement state to {self.enablement_state}")

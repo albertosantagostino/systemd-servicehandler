@@ -1,12 +1,12 @@
 # Systemd service handler (servicehandler)
 
-**servicehandler** is an orchestrator for systemd services, distributed as Python package. It abstracts services as objects and provides helper methods, wrapping the `systemctl` command
+**servicehandler** is a Python library that provides an orchestrator for systemd services. It abstracts services as objects and implements helper methods, wrapping the `systemctl` command
 
-Using the module does not require root permissions, as the service manager used is the one of the calling user (the service configuration files are in `/usr/lib/systemd/user/`)
+Using this package does **not** require root permissions, as the service manager used is the one of the current user (the service configuration files are in `/usr/lib/systemd/user/`)
 
-## Usage and features
+## Description
 
-**Sample system file** (located under `/usr/lib/systemd/user/my-service.service`)
+The first thing to handle services is to create a **service unit file** (under `/usr/lib/systemd/user/my-service.service`) like the following:
 
 ```ini
 [Unit]
@@ -21,28 +21,59 @@ WorkingDirectory=/home/user/service_script/
 WantedBy=multi-user.target
 ```
 
-Depending on how you created the service file you may need to provide access to the user through `sudo chmod 644 my-service.service` 
+Depending on how you created the service file you may need to provide access to the user through `sudo chmod 644 my-service.service`
 
-**Access and control easily the service through servicehandler**
+### Usage
+
+**Control the state of a service**
 
 ```python
 import servicehandler as sh
 
-# Create a new service handler providing a name and the configuration file
-MyService = sh.ServiceHandler('My service','my-service.service')
+# Create a new service handler
+my_service = sh.ServiceHandler('MyService','my-service.service')
+
+# Check current state
+my_service.state
+<ServiceState.STOPPED: 2>
 
 # Start the service
-MyService.start()
+> my_service.start()
+MyService changed state to ServiceState.RUNNING
+<Response.OK: 1>
 
-# Check the status
-MyService.status()
-> <ServiceState.RUNNING: 1>
-    
+# Try to start again the service
+> my_service.start()
+<Response.ALREADY: 2>
+
 # Terminate the service
-MyService.stop()
+> my_service.stop()
+MyService changed state to ServiceState.STOPPED
+<Response.OK: 1>
 
-# Force kill the service
-MyService.kill()
+# Kill the service
+# In this specific case, the unit file was configured with restart=on-failure (automatic restart)
+> my_service.kill()
+<Response.OK: 1>
+```
+**Control the enablement_state of a service (whether it starts automatically on system startup)**
+
+```python
+# Check current enablement_state
+> my_service.enablement_state
+<ServiceEnablementState.DISABLED: 2>
+
+# Enable the service
+> my_service.enable()
+Created symlink /home/user/.config/systemd/user/multi-user.target.wants/my_service.service → /usr/lib/systemd/user/my_service.service.
+<Response.OK: 1>
+MyService changed enablement state to ServiceEnablementState.ENABLED
+
+# Disable the service
+> my_service.disable()
+Removed /home/user/.config/systemd/user/multi-user.target.wants/my_service.service.
+<Response.OK: 1>
+MyService changed enablement state to ServiceEnablementState.DISABLED
 ```
 
 **Iterate over different services and perform batch operations**
@@ -50,9 +81,9 @@ MyService.kill()
 ```python
 import servicehandler as sh
 
-ServiceA = sh.ServiceHandler('A service','A-config-file.service')
-ServiceB = sh.ServiceHandler('B service','B-config-file.service')
-ServiceC = sh.ServiceHandler('C service','C-config-file.service')
+service_A = sh.ServiceHandler('ServiceA','A-config-file.service')
+service_B = sh.ServiceHandler('ServiceB','B-config-file.service')
+service_C = sh.ServiceHandler('ServiceC','C-config-file.service')
 
 services = [ServiceA, ServiceB, ServiceC]
 
@@ -65,9 +96,9 @@ for sr in services:
 
 ## Installation
 
-To install the package building it from source, run:
+To build and install the package from source:
 
-```bash
+```
 git clone https://github.com/albertosantagostino/systemd-servicehandler
 cd systemd-servicehandler
 python3 setup.py install
@@ -79,9 +110,9 @@ python3 setup.py install
 
 ### Manage multiple services from a single entry-point
 
-The package was born while developing a Telegram bot ~~overlord~~ manager, to handle other bots (and services) running on the same platform, providing a single point of access to the user
+This library was developed while working on a Telegram bot ~~overlord~~ manager, used to handle other bots (and services) running on the same platform, providing a single point of access to the user
 
-More specifically, 4 different telegram bots (developed with the [python-telegram-bot](https://python-telegram-bot.org) library) were running on a headless Raspberry Pi Zero. In order to start them when needed, check their logs and provide an easy way to handle them without SSHing into the RPi every time, a new all-powerful Telegram bot was created, armed with the newly created package **servicehandler**
+In this scenario multiple bots run on a headless Raspberry Pi Zero. In order to start them when needed, check their logs and interact with them without opening an SSH session every time, a brand new all-powerful Telegram bot was created, weaponized with this new package, **servicehandler**
 
 ## License
 
